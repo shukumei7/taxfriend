@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaxFriend — CRA Tax Assistant</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header>
+    <h1>TaxFriend</h1>
+    <p>CRA Tax Filing Assistant</p>
+  </header>
+
+  <main>
+    <section class="setup-panel">
+      <div class="panel-section">
+        <h2>Tax Year</h2>
+        <select id="year-select">
+          <option value="">— select year —</option>
+        </select>
+        <input id="year-new" type="text" placeholder="or type new year, e.g. 2025">
+      </div>
+
+      <div class="panel-section">
+        <h2>Person</h2>
+        <select id="person-select">
+          <option value="">— select person —</option>
+        </select>
+        <input id="person-new" type="text" placeholder="or type new name, e.g. john">
+      </div>
+
+      <div class="panel-section">
+        <h2>Documents</h2>
+        <div id="drop-zone">
+          <span class="drop-label">Drag &amp; drop files here or click to browse</span>
+          <span class="drop-sub">PDFs, images, text files, ZIP archives</span>
+          <input id="file-input" type="file" accept="*" multiple>
+        </div>
+        <ul id="file-list"></ul>
+      </div>
+
+      <div class="panel-actions">
+        <button id="upload-btn" disabled>Upload Files</button>
+        <button id="analyze-btn" class="btn-secondary" disabled>Analyze Documents</button>
+      </div>
+
+      <div id="status"></div>
+    </section>
+
+    <section class="report-panel">
+      <!-- Advice bar — shown after analysis, above tabs -->
+      <div id="advice-bar" class="advice-bar hidden"></div>
+
+      <div class="tab-bar">
+        <button class="tab-btn active" data-tab="tab-report">Report</button>
+        <button class="tab-btn" data-tab="tab-fillguide">Fill Guide</button>
+        <button class="tab-btn" data-tab="tab-checklist">Checklist</button>
+        <button class="tab-btn" data-tab="tab-chat">Chat</button>
+        <button class="tab-btn" data-tab="tab-json">Raw JSON</button>
+      </div>
+
+      <div class="tab-content">
+        <div id="tab-report" class="tab-pane active">
+          <p class="placeholder">Run an analysis to see your report here.</p>
+        </div>
+
+        <div id="tab-fillguide" class="tab-pane">
+          <p class="placeholder">Run an analysis to generate your TurboTax fill guide.</p>
+        </div>
+
+        <div id="tab-checklist" class="tab-pane">
+          <div class="checklist-header">
+            <div id="checklist-progress" class="checklist-progress hidden"></div>
+            <button id="checklist-refresh-btn" class="btn-ghost hidden">&#8635; Refresh with Claude</button>
+          </div>
+          <div id="checklist-body">
+            <p class="placeholder">Run an analysis to generate your filing checklist.</p>
+          </div>
+          <div id="checklist-next-steps" class="checklist-next-steps hidden"></div>
+          <div id="checklist-blockers" class="checklist-blockers hidden"></div>
+        </div>
+
+        <div id="tab-chat" class="tab-pane chat-pane">
+          <div id="chat-history" class="chat-history"></div>
+          <div class="chat-input-row">
+            <textarea id="chat-input" placeholder="Ask about your taxes, deductions, credits..." rows="2"></textarea>
+            <button id="chat-send-btn">Send</button>
+          </div>
+          <div class="chat-actions">
+            <button id="chat-clear-btn" class="btn-ghost">Clear chat</button>
+          </div>
+          <p class="chat-disclaimer">AI responses are for guidance only — not professional tax advice.</p>
+        </div>
+
+        <div id="tab-json" class="tab-pane">
+          <pre id="report-json"></pre>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>Not professional tax advice. Verify all figures with a qualified tax professional before filing.</p>
+  </footer>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

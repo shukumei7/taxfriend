@@ -1,0 +1,105 @@
+{
+  "deductions": [
+    {
+      "name": "RRSP Contributions",
+      "t1_lines": ["20800"],
+      "required_docs": ["RRSP contribution receipts from financial institution"],
+      "deadline": "60 days after Dec 31 (end of Feb/early Mar)",
+      "notes": "Contribution limit is 18% of prior year earned income minus pension adjustment"
+    },
+    {
+      "name": "Child Care Expenses",
+      "t1_lines": ["21400"],
+      "required_docs": ["Receipts from daycare/babysitter with provider SIN or BN", "Form T778"],
+      "notes": "Must be claimed by lower-income spouse"
+    },
+    {
+      "name": "Moving Expenses",
+      "t1_lines": ["21900"],
+      "required_docs": ["Moving company receipts", "Travel receipts", "New and old lease/mortgage docs"],
+      "notes": "Only if moved 40+ km closer to new work/school. Form T1-M required."
+    },
+    {
+      "name": "Medical Expenses",
+      "t1_lines": ["33099"],
+      "required_docs": ["Receipts for prescriptions", "Dental receipts", "Vision care receipts", "Medical device receipts"],
+      "notes": "Must exceed 3% of net income or $2,635 (2024). 12-month period, not calendar year."
+    },
+    {
+      "name": "Charitable Donations",
+      "t1_lines": ["34900"],
+      "required_docs": ["Official donation receipts with CRA registration number"],
+      "notes": "First $200 at 15%, over $200 at 29% federal credit rate"
+    },
+    {
+      "name": "Tuition Fees",
+      "t1_lines": ["32300"],
+      "required_docs": ["T2202 from educational institution"],
+      "notes": "T2202 must be downloaded from institution's student portal"
+    },
+    {
+      "name": "Home Office Expenses",
+      "t1_lines": ["22900"],
+      "required_docs": ["T2200 signed by employer", "Utility bills", "Rent/mortgage interest records", "Home internet bills"],
+      "notes": "Temporary flat rate method ended 2022. Must use detailed method with T2200."
+    },
+    {
+      "name": "Employment Expenses",
+      "t1_lines": ["22900"],
+      "required_docs": ["T2200 Declaration of Conditions of Employment signed by employer", "All expense receipts"],
+      "notes": "Employer must certify you were required to pay expenses"
+    },
+    {
+      "name": "Investment Carrying Charges",
+      "t1_lines": ["22100"],
+      "required_docs": ["Investment loan interest statements", "Safety deposit box receipts", "Investment counsel fees"],
+      "notes": "Interest on money borrowed to earn investment income"
+    },
+    {
+      "name": "Capital Gains/Losses",
+      "t1_lines": ["12700"],
+      "required_docs": ["T5008 from broker", "ACB records for each security sold"],
+      "notes": "Keep records of adjusted cost base. Use CRA Schedule 3."
+    },
+    {
+      "name": "Disability Tax Credit",
+      "t1_lines": ["31600"],
+      "required_docs": ["Form T2201 certified by medical practitioner"],
+      "notes": "One-time application, approved by CRA. Transferable to supporting person."
+    },
+    {
+      "name": "First Home Buyers Amount",
+      "t1_lines": ["31270"],
+      "required_docs": ["Purchase agreement", "Statement of Adjustments"],
+      "notes": "$10,000 credit if you or spouse bought qualifying home and didn't own another in last 4 years"
+    },
+    {
+      "name": "Canada Training Credit",
+      "t1_lines": ["45350"],
+      "required_docs": ["T2202 or other eligible tuition receipts"],
+      "notes": "Refundable credit, $250/year accumulation limit. Check My CRA Account for balance."
+    },
+    {
+      "name": "Union/Professional Dues",
+      "t1_lines": ["21200"],
+      "required_docs": ["T4 Box 44", "Union receipts if not on T4"],
+      "notes": "Usually already on T4 Box 44. Additional dues not on T4 need receipts."
+    }
+  ],
+  "common_slips": {
+    "T4": "Employment income — from every employer",
+    "T4A": "Pension, retirement, annuity, and other income",
+    "T4A(OAS)": "Old Age Security pension",
+    "T4A(P)": "Canada Pension Plan benefits",
+    "T4E": "Employment Insurance benefits",
+    "T4RSP": "RRSP income (withdrawals)",
+    "T4RIF": "Registered Retirement Income Fund",
+    "T5": "Statement of investment income (dividends, interest)",
+    "T5008": "Statement of Securities Transactions (capital gains)",
+    "T3": "Statement of Trust Income (mutual funds, ETFs)",
+    "T2202": "Tuition and Enrolment Certificate",
+    "T778": "Child Care Expenses Deduction",
+    "RC62": "Universal Child Care Benefit statement",
+    "T10": "Pension Adjustment Reversal"
+  }
+}
