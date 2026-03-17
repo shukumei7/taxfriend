@@ -353,6 +353,10 @@ button:disabled {
   display: block;
 }
 
+.tab-pane.active.chat-pane {
+  display: flex;
+}
+
 /* Markdown report */
 #report-md {
   font-family: Georgia, 'Times New Roman', serif;
@@ -534,7 +538,6 @@ button:disabled {
 
 /* Chat */
 .chat-pane {
-  display: flex;
   flex-direction: column;
   height: 550px;
 }

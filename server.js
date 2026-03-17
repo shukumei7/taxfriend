@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import multer from 'multer';
 import AdmZip from 'adm-zip';
@@ -6,6 +7,7 @@ import { join, extname, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 
+import { loadConfig, saveConfig } from './src/llm-providers.js';
 import { scanPerson } from './src/scanner.js';
 import { extractText } from './src/extractor.js';
 import { classifyDocuments } from './src/analyzer.js';
@@ -26,6 +28,21 @@ app.use(express.json());
 app.use(express.static(join(__dirname, 'public')));
 
 const upload = multer({ dest: 'uploads/' });
+
+// GET /api/llm-config
+app.get('/api/llm-config', (req, res) => {
+  res.json(loadConfig());
+});
+
+// PUT /api/llm-config
+app.put('/api/llm-config', (req, res) => {
+  const config = req.body;
+  if (!config?.providers || !config?.stages) {
+    return res.status(400).json({ error: 'Invalid config: must have providers and stages' });
+  }
+  saveConfig(config);
+  res.json({ ok: true });
+});
 
 // GET /api/years
 app.get('/api/years', async (req, res) => {
@@ -179,19 +196,24 @@ app.post('/api/analyze', async (req, res) => {
       await writeFile(chatPath, JSON.stringify(history, null, 2), 'utf-8');
     }
 
-    // Generate filing checklist
-    const checklist = await generateChecklist(analysis, year, person);
-    if (checklist) {
-      await writeFile(join(taxfriendDir, 'checklist.json'), JSON.stringify(checklist, null, 2), 'utf-8');
-    }
+    // Respond immediately — checklist generation runs in background
+    res.json({ success: true, report: { markdown, json: analysis }, checklist: null });
 
-    res.json({ success: true, report: { markdown, json: analysis }, checklist });
+    // Generate filing checklist asynchronously (separate claude -p call, ~2min)
+    generateChecklist(analysis, year, person).then(async checklist => {
+      if (checklist) {
+        await writeFile(join(taxfriendDir, 'checklist.json'), JSON.stringify(checklist, null, 2), 'utf-8');
+        process.stderr.write(`[checklist] saved for ${person}/${year}\n`);
+      }
+    }).catch(err => {
+      process.stderr.write(`[checklist] background generation failed: ${err.message}\n`);
+    });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// GET /api/report/:year/:person
+// GET /api/report/:year/:person  (JSON)
 app.get('/api/report/:year/:person', async (req, res) => {
   const { year, person } = req.params;
   if (!validatePathSegment(year) || !validatePathSegment(person)) {
@@ -204,6 +226,27 @@ app.get('/api/report/:year/:person', async (req, res) => {
   } catch {
     res.status(404).json({ error: 'Report not found' });
   }
+});
+
+// GET /api/report-md/:year/:person  (markdown text)
+app.get('/api/report-md/:year/:person', async (req, res) => {
+  const { year, person } = req.params;
+  if (!validatePathSegment(year) || !validatePathSegment(person)) {
+    return res.status(400).json({ error: 'Invalid year or person value' });
+  }
+  // Check .taxfriend first, then output/ fallback
+  const paths = [
+    join(__dirname, 'input', year, person, '.taxfriend', 'report.md'),
+    join(__dirname, 'output', year, person, 'report.md'),
+  ];
+  for (const p of paths) {
+    try {
+      const md = await readFile(p, 'utf-8');
+      res.type('text/plain').send(md);
+      return;
+    } catch { /* try next */ }
+  }
+  res.status(404).send('');
 });
 
 // GET /api/analysis/:year/:person
@@ -481,7 +524,7 @@ app.get('/', (req, res) => {
   res.sendFile(join(__dirname, 'public', 'index.html'));
 });
 
-const PORT = 9001;
+const PORT = process.env.TF_PORT || 9001;
 app.listen(PORT, () => {
   process.stdout.write(`TaxFriend server running at http://localhost:${PORT}\n`);
 });

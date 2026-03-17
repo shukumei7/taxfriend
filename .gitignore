@@ -1,3 +1,6 @@
 output/
 node_modules/
 input/
+
+# Environment
+.env

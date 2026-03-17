@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { getDeductionChecklist, classifyDocuments } from '../src/analyzer.js';
+import { getDeductionChecklist, classifyDocuments, classifyOne } from '../src/analyzer.js';
 
 describe('getDeductionChecklist', () => {
   test('returns an array', async () => {
@@ -98,21 +98,39 @@ describe('classifyDocuments', () => {
     }
   });
 
-  test('documents array length matches extractions length in fallback mode', async (t) => {
+  test('classifyOne routes image to clarification without LLM call', async () => {
+    const result = await classifyOne(
+      { file: 'PXL_20250601_172312217.jpg', type: 'image', text: '' },
+      '2025', 'test'
+    );
+    assert.strictEqual(result.needs_clarification, true);
+    assert.ok(result.clarification_question.length > 0);
+  });
+
+  test('classifyOne routes scanned PDF to clarification without LLM call', async () => {
+    const result = await classifyOne(
+      { file: 'receipt.pdf', type: 'pdf', text: '   ' },
+      '2025', 'test'
+    );
+    assert.strictEqual(result.needs_clarification, true);
+  });
+
+  test('documents array length matches extractions length', async (t) => {
     const origPath = process.env.PATH;
     process.env.PATH = '';
     try {
+      // Use text long enough to avoid Route A (>= 50 chars) so routing logic is exercised.
+      // With PATH='', claude is unfindable; classifyOne falls back per-document gracefully.
+      const longText = 'Employment income T4 slip data from employer '.repeat(4);
       const extractions = [
-        { file: 'slip1.txt', type: 'text', text: 'data' },
-        { file: 'slip2.txt', type: 'text', text: 'data' },
+        { file: 'slip1.txt', type: 'text', text: longText },
+        { file: 'slip2.txt', type: 'text', text: longText },
       ];
 
       const result = await classifyDocuments(extractions, '2024', 'TestPerson');
 
-      // With PATH='', claude is unfindable, so fallback is always triggered
-      assert.ok(result.llm_unavailable, 'should be in fallback mode');
       assert.equal(result.documents.length, extractions.length,
-        'fallback documents array should match extraction count');
+        'documents array should match extraction count');
     } finally {
       process.env.PATH = origPath;
     }

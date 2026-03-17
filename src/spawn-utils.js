@@ -1,5 +1,7 @@
 import { spawn } from 'node:child_process';
 
+export { callLLM } from './llm-providers.js';
+
 export function extractJson(text) {
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');

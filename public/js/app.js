@@ -102,6 +102,7 @@ function attachListeners() {
   personSelect.addEventListener('change', () => {
     if (!personNew.value.trim()) {
       updateButtons();
+      loadExistingAnalysis();
       loadChatHistory();
       loadChecklist();
     }
@@ -109,6 +110,7 @@ function attachListeners() {
 
   personNew.addEventListener('input', () => {
     updateButtons();
+    loadExistingAnalysis();
     loadChatHistory();
     loadChecklist();
   });
@@ -251,6 +253,48 @@ async function handleUpload() {
 }
 
 // ── Analyze ───────────────────────────────────────────────────────────────────
+
+async function loadExistingAnalysis() {
+  const year = getYear();
+  const person = getPerson();
+  if (!year || !person) return;
+
+  try {
+    const [analysisRes, reportRes] = await Promise.all([
+      fetch(`/api/analysis/${encodeURIComponent(year)}/${encodeURIComponent(person)}`),
+      fetch(`/api/report/${encodeURIComponent(year)}/${encodeURIComponent(person)}`),
+    ]);
+
+    if (!analysisRes.ok) return; // no saved analysis yet
+
+    const analysis = await analysisRes.json();
+
+    // Build markdown from saved report if available, otherwise skip markdown tab
+    let markdown = null;
+    if (reportRes.ok) {
+      const reportJson = await reportRes.json();
+      // report.json wraps the full analysis; the markdown is in report.md on disk
+      // We can reconstruct a basic view from analysis if no markdown endpoint exists
+      markdown = reportJson.markdown || null;
+    }
+
+    // Load markdown report from the .md file via a dedicated endpoint if needed
+    if (!markdown) {
+      const mdRes = await fetch(`/api/report-md/${encodeURIComponent(year)}/${encodeURIComponent(person)}`);
+      if (mdRes.ok) markdown = await mdRes.text();
+    }
+
+    if (markdown) {
+      document.getElementById('tab-report').innerHTML = renderMarkdown(markdown);
+    }
+    document.getElementById('report-json').textContent = JSON.stringify(analysis, null, 2);
+    renderFillGuide(analysis.fill_guide);
+    renderAdviceBar(analysis);
+    showStatus('Loaded saved analysis for ' + person + ' (' + year + ').', 'info');
+  } catch {
+    // No saved analysis — tabs stay at placeholder, that's fine
+  }
+}
 
 async function handleAnalyze() {
   const year = getYear();

@@ -1,4 +1,5 @@
-import { extractJson, callClaude } from './spawn-utils.js';
+import { extractJson } from './spawn-utils.js';
+import { callLLM } from './llm-providers.js';
 
 const SYSTEM_PROMPT = `You are an expert CRA tax filing assistant for Canada. Given a tax analysis, produce a comprehensive filing checklist for this taxpayer. The checklist must be exhaustive — include every document, slip, form, and step needed to file accurately. Expand the checklist based on what documents were found (e.g. T4 found → include all T4 boxes, employer confirmation). Flag missing critical items. Group by category. Return valid JSON only.`;
 
@@ -73,7 +74,7 @@ Full analysis:
 ${analysisJson}`;
 
   try {
-    const responseText = await callClaude(prompt, SYSTEM_PROMPT, 120000);
+    const responseText = await callLLM(prompt, SYSTEM_PROMPT, { stage: 'checklist', timeoutMs: 120000 });
     const parsed = extractJson(responseText);
     if (!parsed) {
       process.stderr.write('[checklist] LLM response did not contain valid JSON\n');
@@ -116,7 +117,7 @@ Instructions:
 - Return the full updated checklist JSON in the same structure as the existing checklist`;
 
   try {
-    const responseText = await callClaude(prompt, SYSTEM_PROMPT, 120000);
+    const responseText = await callLLM(prompt, SYSTEM_PROMPT, { stage: 'checklist', timeoutMs: 120000 });
     const parsed = extractJson(responseText);
     if (!parsed) {
       process.stderr.write('[checklist] refresh response did not contain valid JSON, returning existing\n');
