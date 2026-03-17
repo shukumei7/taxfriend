@@ -1,5 +1,8 @@
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { extname, basename, join } from 'node:path';
+import { extname, basename, join, dirname } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -53,53 +56,34 @@ export async function extractText(filePath) {
  * Returns [] if pdfjs-dist or canvas is unavailable.
  */
 export async function pdfToImages(pdfPath, outputDir) {
-  let pdfjsLib;
+  let mupdf;
   try {
-    pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs');
+    mupdf = await import('mupdf');
   } catch {
-    try {
-      pdfjsLib = await import('pdfjs-dist');
-    } catch {
-      return [];
-    }
-  }
-
-  let createCanvas;
-  try {
-    ({ createCanvas } = await import('canvas'));
-  } catch {
+    process.stderr.write('[pdfToImages] mupdf not available\n');
     return [];
   }
 
   try {
-    // Disable worker for Node.js environment
-    if (pdfjsLib.GlobalWorkerOptions) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-    }
-
     const data = await readFile(pdfPath);
-    const pdf = await pdfjsLib.getDocument({ data: new Uint8Array(data), disableWorker: true }).promise;
-    const numPages = Math.min(pdf.numPages, 10);
+    const doc = mupdf.Document.openDocument(data, 'application/pdf');
+    const numPages = Math.min(doc.countPages(), 10);
 
     await mkdir(outputDir, { recursive: true });
 
     const base = basename(pdfPath, extname(pdfPath));
     const paths = [];
+    const scale = 2;
+    const matrix = [scale, 0, 0, scale, 0, 0];
 
-    for (let i = 1; i <= numPages; i++) {
-      const page = await pdf.getPage(i);
-      const scale = 2.0;
-      const viewport = page.getViewport({ scale });
-
-      const canvas = createCanvas(viewport.width, viewport.height);
-      const ctx = canvas.getContext('2d');
-
-      await page.render({ canvasContext: ctx, viewport }).promise;
-
-      const outPath = join(outputDir, `${base}-p${i}.png`);
-      const buffer = canvas.toBuffer('image/png');
-      await writeFile(outPath, buffer);
+    for (let i = 0; i < numPages; i++) {
+      const page = doc.loadPage(i);
+      const pixmap = page.toPixmap(matrix, mupdf.ColorSpace.DeviceRGB, false, true);
+      const png = pixmap.asPNG();
+      const outPath = join(outputDir, `${base}-p${i + 1}.png`);
+      await writeFile(outPath, png);
       paths.push(outPath);
+      pixmap.destroy();
     }
 
     return paths;

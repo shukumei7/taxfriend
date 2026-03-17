@@ -52,10 +52,13 @@ function makeFallbackDoc(extraction) {
 
 // ── Phase 1: classify one document ───────────────────────────────────────────
 
-function buildSingleDocPrompt(extraction, year, person) {
-  const content = extraction.error
-    ? `[Error reading file: ${extraction.error}]`
-    : extraction.text.slice(0, 4000);
+function buildSingleDocPrompt(extraction, year, person, hasImages = false) {
+  // When images are provided, omit extracted text — form labels confuse vision models
+  const content = hasImages
+    ? '[See attached image(s) — read all values directly from the document.]'
+    : extraction.error
+      ? `[Error reading file: ${extraction.error}]`
+      : extraction.text.slice(0, 4000);
 
   return `Tax year: ${year}
 Taxpayer: ${person}
@@ -83,14 +86,28 @@ ${content}`;
 
 // Route C: single-pass for short text
 async function classifySinglePass(extraction, year, person, images = []) {
-  const prompt = buildSingleDocPrompt(extraction, year, person);
+  // Try vision-capable stage first if images available (prompt omits text to avoid confusing model)
+  if (images.length > 0) {
+    try {
+      const prompt = buildSingleDocPrompt(extraction, year, person, true);
+      const responseText = await callLLM(prompt, SYSTEM_PROMPT, { stage: 'partition', timeoutMs: 90000, images });
+      const parsed = extractJson(responseText);
+      if (parsed) return parsed;
+    } catch {
+      // vision LLM unavailable (quota, no key, etc.) — fall through to text-only
+    }
+  }
+
+  // Text-only synthesis (no images sent, include extracted text)
   try {
-    const responseText = await callLLM(prompt, SYSTEM_PROMPT, { stage: 'synthesis', timeoutMs: 90000, images });
+    const prompt = buildSingleDocPrompt(extraction, year, person, false);
+    const responseText = await callLLM(prompt, SYSTEM_PROMPT, { stage: 'synthesis', timeoutMs: 90000 });
     const parsed = extractJson(responseText);
     if (parsed) return parsed;
   } catch {
     // fall through
   }
+
   return makeFallbackDoc(extraction);
 }
 
@@ -284,15 +301,10 @@ export async function classifyOne(extraction, year, person) {
   }
 
   if (docImages.length > 0) {
-    // Vision routes: skip A/B (scanned detection) — we have real image data
-    // Route C (vision): short text or scanned — single pass with images
-    if (len < 2000) {
-      process.stderr.write(`[analyze] ${extraction.file}: vision single pass\n`);
-      return classifySinglePass(extraction, year, person, docImages);
-    }
-    // Route D (vision): long text — 3-stage pipeline with images
-    process.stderr.write(`[analyze] ${extraction.file}: vision 3-stage pipeline\n`);
-    return classifyMultiStage(extraction, year, person, docImages);
+    // Vision always uses single-pass — vision models see full pages, chunking is for text overflow only.
+    // classifySinglePass will try partition (vision) first, fall back to synthesis (text) if unavailable.
+    process.stderr.write(`[analyze] ${extraction.file}: vision single-pass, ${docImages.length} page(s)\n`);
+    return classifySinglePass(extraction, year, person, docImages);
   }
 
   // Route A: scanned PDF
