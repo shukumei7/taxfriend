@@ -376,13 +376,14 @@ function deriveAggregateFromDocs(documents) {
   let total_deductions = 0;
   let total_credits = 0;
 
-  const T4_INCOME_FIELDS = ['box_14_employment_income', 'box_14'];
-  const T5_INTEREST_FIELDS = ['box_13_interest', 'box_13', 'other_information_amount_1'];
-  const T5_DIVIDEND_FIELDS = ['box_24_eligible_dividends', 'box_24', 'other_information_amount_2'];
-  const CPP_FIELDS = ['box_16_cpp_contributions', 'box_16'];
-  const EI_FIELDS = ['box_18_ei_premiums', 'box_18'];
-  const TAX_WITHHELD = ['box_22_income_tax_deducted', 'box_22'];
-  const BUSINESS_INCOME = ['total_consideration_paid_cad', 'gross_income', 'gross_business_income'];
+  // Each list tries canonical box_ prefix first, then bare number (vision LLMs omit prefix)
+  const T4_INCOME_FIELDS = ['box_14_employment_income', 'box_14', '14_employment_income', '14'];
+  const T5_INTEREST_FIELDS = ['box_13_interest_from_canadian_sources', 'box_13_interest', 'box_13', 'other_information_amount_1'];
+  const T5_DIVIDEND_FIELDS = ['box_10_actual_amount_dividends_other_than_eligible_dividends', 'box_24_eligible_dividends', 'box_24', 'other_information_amount_2'];
+  const CPP_FIELDS = ['box_16_employee_cpp_contributions', 'box_16_cpp_contributions', 'box_16', '16_cpp_contributions', '16'];
+  const EI_FIELDS = ['box_18_employee_ei_premiums', 'box_18_ei_premiums', 'box_18', '18_ei_premiums', '18'];
+  const TAX_WITHHELD = ['box_22_income_tax_deducted', 'box_22', '22_income_tax_deducted', '22'];
+  const BUSINESS_INCOME = ['total_consideration_paid_cad', 'total_consideration_paid_or_credited', 'gross_income', 'gross_business_income'];
 
   function pickField(fields, keys) {
     for (const k of keys) {
